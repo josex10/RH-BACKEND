@@ -3,6 +3,10 @@ const Usuario = require('../models/usuario.model');
 const bcryptjs = require('bcryptjs');
 
 
+const userTest = async (req = request, res = response)=>{
+    res.json({return: "This is an example"});
+}
+
 const userGET = async (req = request, res = response)=>{
     const { limite = 5, desde = 0 } = req.query;
     const query = {estado:true};
@@ -70,5 +74,5 @@ const userDELETE = async (req, res = response)=>{
 
 
 module.exports = {
-    userGET, userPOST, userPUT, userDELETE
+    userGET, userPOST, userPUT, userDELETE, userTest
 }
