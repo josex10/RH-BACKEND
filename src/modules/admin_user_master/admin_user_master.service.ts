@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateAdminUserMasterDto } from './dto/create-admin_user_master.dto';
+import { IdParamAdminUserMasterDto } from './dto/id-param-admin_user_master.dto';
 import { UpdateAdminUserMasterDto } from './dto/update-admin_user_master.dto';
 import { AdminUserMaster } from './entities/admin_user_master.entity';
 
@@ -28,10 +29,10 @@ export class AdminUserMasterService {
     return this.adminUserMasterRepository.find();
   }
 
-  async findOne(id: number) {
+  async findOne(params: IdParamAdminUserMasterDto) {
     const userFound = await this.adminUserMasterRepository.findOne({
       where: {
-        clm_id: id,
+        clm_id: params.id,
       },
     });
 
@@ -42,10 +43,10 @@ export class AdminUserMasterService {
     return userFound;
   }
 
-  async update(id: number, updateAdminUserMasterDto: UpdateAdminUserMasterDto) {
+  async update(params: IdParamAdminUserMasterDto, updateAdminUserMasterDto: UpdateAdminUserMasterDto) {
     const userFound = await this.adminUserMasterRepository.findOne({
       where: {
-        clm_id: id,
+        clm_id: params.id,
       },
     });
 
@@ -58,8 +59,8 @@ export class AdminUserMasterService {
     return this.adminUserMasterRepository.save(updateUser);
   }
 
-  async remove(id: number) {
-    const userDeleted = this.adminUserMasterRepository.delete({ clm_id: id });
+  async remove(params: IdParamAdminUserMasterDto) {
+    const userDeleted = this.adminUserMasterRepository.delete({ clm_id: params.id });
 
     if ((await userDeleted).affected === 0) {
       return new HttpException('User Not Found', HttpStatus.NOT_FOUND);

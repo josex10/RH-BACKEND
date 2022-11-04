@@ -1,31 +1,33 @@
+// NEST IMPORTS
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AdminUserMasterModule } from './admin_user_master/admin_user_master.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { join } from 'path';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+
+// CONFIG IMPORTS
+import { TypeOrmConfig } from './config/typeOrm.config';
+
+// SERVICE IMPORTS
+import { AppService } from './app.service';
+
+// MODULES IMPORTS
+import { AdminUserMasterModule } from './modules/admin_user_master/admin_user_master.module';
+import { AuthModule } from './modules/auth/auth.module';
+
+//CONTROLERS IMPORTS
+import { AppController } from './app.controller';
+
 
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
-      useFactory: async (config: ConfigService) => ({
-        database: config.get<string>('DATABASE_DATABASE'),
-        username: config.get<string>('DATABASE_USERNAME'),
-        password: config.get<string>('DATABASE_PASSWORD'),
-        host: config.get<string>('DATABASE_HOST'),
-        port: parseInt(config.get('DATABASE_PORT')),
-        synchronize: false,
-        type: 'mysql',
-        entities: [join(__dirname, '**', '*.entity.{ts,js}')],
-      }),
-      inject: [ConfigService],
+      useClass: TypeOrmConfig,
     }),
     ConfigModule.forRoot({
       envFilePath:'src/env/development.env',
       isGlobal: true,
     }),
-    AdminUserMasterModule],
+    AdminUserMasterModule,
+    AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })
