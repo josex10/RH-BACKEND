@@ -1,6 +1,13 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateAdminUserMasterDto } from './create-admin_user_master.dto';
+import { IsEmail, IsNotEmpty } from 'class-validator';
 
-export class UpdateAdminUserMasterDto extends PartialType(CreateAdminUserMasterDto) {
-    clm_is_active?: boolean;
+export class UpdateAdminUserMasterDto {
+    @IsNotEmpty()
+    clm_name: string;
+
+    @IsNotEmpty()
+    clm_lastname: string;
+
+    @IsNotEmpty()
+    @IsEmail()
+    clm_email: string;
 }

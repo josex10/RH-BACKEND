@@ -1,6 +1,11 @@
-import { IsEmail, IsNotEmpty } from "class-validator";
+import { IsEmail, IsNotEmpty, IsOptional } from "class-validator";
 
-export class CreateAdminUserMasterDto {
+export class RegisterMasterUserAuthDto {
+    
+    @IsNotEmpty()
+    @IsOptional()
+    clm_username?: string;
+    
     @IsNotEmpty()
     clm_name: string;
 
@@ -14,3 +19,4 @@ export class CreateAdminUserMasterDto {
     @IsNotEmpty()
     clm_password: string;
 }
+

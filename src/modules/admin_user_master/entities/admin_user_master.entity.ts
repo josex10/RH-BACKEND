@@ -6,6 +6,9 @@ export class AdminUserMaster {
     clm_id: number;
 
     @Column()
+    clm_username: string;
+
+    @Column()
     clm_name: string;
 
     @Column()
