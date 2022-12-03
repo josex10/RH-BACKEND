@@ -10,11 +10,12 @@ import { TypeOrmConfig } from './config/typeOrm.config';
 import { AppService } from './app.service';
 
 // MODULES IMPORTS
-import { AdminUserMasterModule } from './modules/admin_user_master/admin_user_master.module';
+import { MasterUserModule } from './modules/master_user/master_user.module';
 import { AuthModule } from './modules/auth/auth.module';
 
 //CONTROLERS IMPORTS
 import { AppController } from './app.controller';
+import { MasterCountryModule } from './modules/master_country/master_country.module';
 
 
 @Module({
@@ -26,7 +27,8 @@ import { AppController } from './app.controller';
       envFilePath:'src/env/development.env',
       isGlobal: true,
     }),
-    AdminUserMasterModule,
+    MasterUserModule,
+    MasterCountryModule,
     AuthModule],
   controllers: [AppController],
   providers: [AppService],

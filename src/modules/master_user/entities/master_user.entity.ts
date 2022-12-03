@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('tbl_admin_user_master')
-export class AdminUserMaster {
+@Entity('tbl_master_user')
+export class MasterUserEntity {
     @PrimaryGeneratedColumn()
     clm_id: number;
 
@@ -12,7 +12,10 @@ export class AdminUserMaster {
     clm_name: string;
 
     @Column()
-    clm_lastname: string;
+    clm_lastname_1: string;
+
+    @Column()
+    clm_lastname_2: string;
 
     @Column({ unique: true })
     clm_email: string;
