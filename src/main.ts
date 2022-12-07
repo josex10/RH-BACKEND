@@ -8,6 +8,7 @@ async function bootstrap() {
   const options = new DocumentBuilder()
     .setTitle("Restaurant Helper API")
     .setVersion("1.0.0 ")
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, options);

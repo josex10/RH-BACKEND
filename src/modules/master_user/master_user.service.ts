@@ -1,139 +1,155 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
-import { IdParamMasterUserDto } from './dto/master_user _id_param.dto';
 import { UpdateMasterUserDto } from './dto/master_user_update.dto';
 import { MasterUserEntity } from './entities/master_user.entity';
+import { IMasterUser, IMasterUserReturn } from './interfaces/master_user.interface';
 
 @Injectable()
 export class MasterUserService {
 
   constructor(@InjectRepository(MasterUserEntity) private MasterUserEntityRepository: Repository<MasterUserEntity>){}
 
-  findAll() {
-    return this.MasterUserEntityRepository.find({
-      select: [
-        "clm_id", 
-        "clm_username",
-        "clm_name",
-        "clm_lastname_1",
-        "clm_lastname_2",
-        "clm_email",
-        "clm_is_active"
-      ]
-    });
-  }
+  /**
+   * @description Get all master users from the Database
+   * @returns IMasterUser[]
+   */
+  findAll = async(): Promise<IMasterUserReturn[]> => {
 
-  async findOne(params: IdParamMasterUserDto) {
+    const arraryOfUsers: IMasterUser[] = await this.MasterUserEntityRepository.find();
 
-    const userFound = await this.queryGetMasterUserbyId(params.id);
-    if (!userFound) {
-      throw new HttpException('User Not Found!', HttpStatus.NOT_FOUND);
+    if(!arraryOfUsers.length){
+      return arraryOfUsers;
     }
 
-    return userFound;
+    return this.fnReturnMasterUser(arraryOfUsers);
   }
 
-  async update(params: IdParamMasterUserDto, UpdateMasterUserDto: UpdateMasterUserDto) {
+  /**
+   * 
+   * @param id 
+   * @description Get single Master User from the DB by id
+   * @returns IMasterUserReturn[]
+   */
+  findById = async(id: number):Promise<IMasterUserReturn[]> => { 
 
-    const userFound = await this.queryGetUserMasterByEmail(UpdateMasterUserDto.clm_email);
-
-    if (userFound) {
-      throw new HttpException('The email is already registered!', HttpStatus.CONFLICT);
-    }
-
-    const updateUser: UpdateResult =  await this.queryUpdateUserMasterById(params.id, UpdateMasterUserDto);
-    if (updateUser.affected === 0) {
-      throw new HttpException('User Not Found'!, HttpStatus.NOT_FOUND);
-    }
-    return this.queryGetMasterUserbyId(params.id);
-  }
-
-  async activate(params: IdParamMasterUserDto) {
-    const activateUser = this.queryActivateDeactivateUserMasterById(params.id, true);
-
-    if ((await activateUser).affected === 0) {
-      throw new HttpException('User Not Found'!, HttpStatus.NOT_FOUND);
-    }
-
-    return this.queryGetMasterUserbyId(params.id);
-  }
-
-  async deactivate(params: IdParamMasterUserDto) {
-    const activateUser = this.queryActivateDeactivateUserMasterById(params.id, false);
-
-    if ((await activateUser).affected === 0) {
-      throw new HttpException('User Not Found'!, HttpStatus.NOT_FOUND);
-    }
-
-    return this.queryGetMasterUserbyId(params.id);
-  }
-
-  private queryGetMasterUserbyId(id: number){
-    return this.MasterUserEntityRepository.findOne({
-      select: [
-        "clm_id", 
-        "clm_username",
-        "clm_name",
-        "clm_lastname_1",
-        "clm_lastname_2",
-        "clm_email",
-        "clm_is_active"
-      ],
+    const arraryOfUsers: IMasterUser[] = await this.MasterUserEntityRepository.find({
       where: {
-        clm_id: id,
-      },
+        clm_id: id
+      }
     });
+
+    if(!arraryOfUsers.length){
+      return arraryOfUsers;
+    }
+
+    return this.fnReturnMasterUser(arraryOfUsers);
   }
 
-  private queryUpdateUserMasterById( id : number, updateUser: UpdateMasterUserDto): Promise<UpdateResult>{
+  /**
+   * 
+   * @param email 
+   * @description Get single Master User from the DB by email
+   * @returns IMasterUserReturn[]
+   */
+  findByEmail = async(email: string):Promise<IMasterUserReturn[]> =>{
+
+    const arraryOfUsers: IMasterUser[] = await this.MasterUserEntityRepository.find({
+      where: {
+        clm_email: email,
+      }
+    });
+
+    if(!arraryOfUsers.length){
+      return arraryOfUsers;
+    }
+
+    return this.fnReturnMasterUser(arraryOfUsers);
+  }
+
+  /**
+   * 
+   * @param username 
+   * @description Get single Master User from the DB by username
+   * @returns IMasterUserReturn[]
+   */
+  findByUsername = async(username: string):Promise<IMasterUserReturn[]> =>{
+
+      const arraryOfUsers: IMasterUser[] = await this.MasterUserEntityRepository.find({
+        where: {
+          clm_username: username,
+        }
+      });
+  
+      if(!arraryOfUsers.length){
+        return arraryOfUsers;
+      }
+  
+      return this.fnReturnMasterUser(arraryOfUsers);
+  }
+
+  /**
+   * 
+   * @param username 
+   * @description Get single Master User from the DB by username
+   * @returns IMasterUserReturn[]
+   */
+   findByUsernameForLogin = async(username: string):Promise<IMasterUser> =>{
+
+    const arraryOfUsers: IMasterUser = await this.MasterUserEntityRepository.findOne({
+      where: {
+        clm_username: username,
+      }
+    });
+
+    return arraryOfUsers;
+  }
+
+  /**
+   * 
+   * @param updateMasterUserDto 
+   * @description Update Master User by id
+   * @returns 
+   */
+  update = async(updateMasterUserDto: UpdateMasterUserDto): Promise<UpdateResult> => {
     return this.MasterUserEntityRepository
     .createQueryBuilder()
     .update(MasterUserEntity)
-    .set({ clm_name: updateUser.clm_name, clm_lastname_1: updateUser.clm_lastname_1, clm_lastname_2: updateUser.clm_lastname_2, clm_email: updateUser.clm_email})
-    .where("clm_id = :id", { id: id })
+    .set(
+      { clm_name: updateMasterUserDto.clm_name, 
+        clm_lastname_1: updateMasterUserDto.clm_lastname_1, 
+        clm_lastname_2: updateMasterUserDto.clm_lastname_2, 
+        clm_email: updateMasterUserDto.clm_email})
+    .where('clm_id = :id', { id: updateMasterUserDto.clm_id })
     .execute();
   }
 
-  private queryActivateDeactivateUserMasterById( id : number, activate: boolean): Promise<UpdateResult>{
+  /**
+   * 
+   * @param id 
+   * @param activate 
+   * @description Update the status of the master user (activated/deactivated)
+   * @returns UpdateResult
+   */
+  updateStatusById = async( id : number, activate: boolean): Promise<UpdateResult> => {
     return this.MasterUserEntityRepository
     .createQueryBuilder()
     .update(MasterUserEntity)
     .set({ clm_is_active: activate})
-    .where("clm_id = :id", { id: id })
+    .where('clm_id = :id', { id: id })
     .execute();
   }
 
-  queryGetUserMasterByEmail(email: string){
-    return this.MasterUserEntityRepository.findOne({
-      where: {
-        clm_email: email
-      },
-    });
-  }
-
-  queryGetUserMasterByUserName(username: string){
-    return this.MasterUserEntityRepository.findOne({
-      where: {
-        clm_username: username
-      },
-    });
-  }
-
-  queryGetMasterUserByUsername(username: string){
-    return this.MasterUserEntityRepository.findOne({
-      select: [
-        "clm_id", 
-        "clm_username",
-        "clm_name",
-        "clm_lastname_1",
-        "clm_lastname_2",
-        "clm_email",
-        "clm_is_active"
-      ],
-      where: {
-        clm_username: username,
-      },
+  /**
+   * 
+   * @param masterUsers[]
+   * @description Convert the Master User from the db to new instance for removing filds not need on the UI
+   * @returns IMasterUserReturn[] 
+   */
+  fnReturnMasterUser(masterUsers: IMasterUser[] ) : IMasterUserReturn[]{
+    return masterUsers.map( masterUser => {
+      const {clm_password, ...tmpmMasterUser} = masterUser;
+      return tmpmMasterUser;
     });
   }
 
