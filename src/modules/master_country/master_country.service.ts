@@ -1,17 +1,25 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { BaseService } from "src/commons/service.common";
 import { Repository } from "typeorm";
 import { MasterCountryEntity } from "./entities/master_country.entity";
+import { IMasterCountry } from "./interfaces/master_country.interface";
 
 @Injectable()
-export class MasterCountryService extends BaseService<MasterCountryEntity> {
+export class MasterCountryService {
 
-    constructor(@InjectRepository(MasterCountryEntity) private masterCountryRepository: Repository<MasterCountryEntity>) {
-        super();
-    }
+    constructor(@InjectRepository(MasterCountryEntity) private masterCountryRepository: Repository<MasterCountryEntity>) {}
 
-    getRepository(): Repository<MasterCountryEntity> {
-        return this.masterCountryRepository;
-    }
+
+/**
+   * 
+   * @description Get all countries
+   * @returns IMasterCountry[]
+   */
+   fnFindAll = async():Promise<IMasterCountry[]> =>{
+
+    const groupOfMasterCountry: IMasterCountry[] = await this.masterCountryRepository.find();
+
+    return groupOfMasterCountry;
+  }
+    
 }

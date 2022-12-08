@@ -1,27 +1,15 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('tbl_master_country')
-export class MasterCountryEntity {
+@Entity('tbl_master_district')
+export class MasterdistrictEntity {
     @PrimaryGeneratedColumn()
     clm_id: number;
 
     @Column()
-    clm_shortname: string;
+    clm_id_master_canton: number;
 
     @Column()
     clm_name: string;
-
-    @Column()
-    clm_currency_name: string;
-
-    @Column()
-    clm_currency_symbol: string;
-
-    @Column()
-    clm_currency_shortname: string;
-    
-    @Column()
-    clm_number_code: string;
 
     @Column()
     clm_is_active: boolean;

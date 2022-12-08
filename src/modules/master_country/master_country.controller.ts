@@ -1,19 +1,20 @@
-import { Controller } from "@nestjs/common";
-import { BaseController } from "src/commons/controller.common";
-import { BaseService } from "src/commons/service.common";
-import { MasterCountryEntity } from "./entities/master_country.entity";
+import { Controller, Get , Response} from "@nestjs/common";
 import { MasterCountryService } from "./master_country.service";
-import { ApiTags } from '@nestjs/swagger';
+import { Response as Res } from 'express';
+import { HttpResponseCommon } from "src/commons/http_response.common";
 
-@ApiTags('Master Country')
 @Controller('master_country')
-export class MasterCountryController extends BaseController<MasterCountryEntity>{
-    constructor(private readonly countryService: MasterCountryService){
-        super();
-    }
+export class MasterCountryController{
+    constructor(private readonly masterCountryService: MasterCountryService){}
 
-    getService(): BaseService<MasterCountryEntity> {
-        return this.countryService;
+    @Get()
+    async findAll(@Response() res: Res, ) {
+    try {
+        const groupOfMasterCountries =  await this.masterCountryService.fnFindAll();
+        return HttpResponseCommon.response200(res, groupOfMasterCountries);
+    } catch (error) {
+        return HttpResponseCommon.response500(res, error);
+    }
     }
     
 }

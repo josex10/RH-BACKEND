@@ -2,19 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MasterUserEntity } from '../master_user/entities/master_user.entity';
-import { RegisterMasterUserAuthDto } from './dto/register-user-master-auth.dto';
+import { MasterUserRegisterAuthDto } from './dto/master_user_register_auth.dto';
 import { hash, compare } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { MasterUserService } from '../master_user/master_user.service';
 import { IMasterUser } from '../master_user/interfaces/master_user.interface';
+import { SystemCompanyEntity } from '../system_company/entities/system_company.entity';
+import { SystemCompanyService } from '../system_company/system_company.service';
+import { SystemCompanyRegisterAuthDto } from './dto/system_company_register_auth.dto';
 
 @Injectable()
 export class AuthService {
 
   constructor(
     @InjectRepository(MasterUserEntity) private MasterUserEntityRepository: Repository<MasterUserEntity>,
+    @InjectRepository(SystemCompanyEntity) private systemCompanyEntityRepository: Repository<SystemCompanyEntity>,
     private jwtService: JwtService, 
-    private MasterUserService: MasterUserService
+    private MasterUserService: MasterUserService,
+    private systemCompanyService: SystemCompanyService
     ){}
 
   /**
@@ -23,7 +28,7 @@ export class AuthService {
    * @description Function to register a user into the DB
    * @returns IMasterUser
    */
-  registerUserMaster = async (registerMasterUserAuthDto: RegisterMasterUserAuthDto): Promise<IMasterUser> => {
+  registerUserMaster = async (registerMasterUserAuthDto: MasterUserRegisterAuthDto): Promise<IMasterUser> => {
 
     const { clm_password } = registerMasterUserAuthDto;
     const plainToHash = await hash(clm_password, 10);
@@ -66,7 +71,7 @@ export class AuthService {
    * @description Function to generate dynamic usernames
    * @returns string
    */
-  fnGenerateUsernameForUserMaster = async( registerMasterUserAuthDto: RegisterMasterUserAuthDto): Promise<string> =>{
+  fnGenerateUsernameForUserMaster = async( registerMasterUserAuthDto: MasterUserRegisterAuthDto): Promise<string> =>{
 
     const splitname = registerMasterUserAuthDto.clm_name.split('');
     const splitLastname = registerMasterUserAuthDto.clm_lastname_1.split(' ');
@@ -96,5 +101,17 @@ export class AuthService {
 
     return tmpUsername;
 
+  }
+
+  /**
+   * 
+   * @param systemCompanyRegisterAuthDto 
+   * @description Function to register a company into the DB
+   * @returns SystemCompanyRegisterAuthDto
+   */
+   fnSystemCompanyRegister = 
+    async (systemCompanyRegisterAuthDto: SystemCompanyRegisterAuthDto): Promise<SystemCompanyRegisterAuthDto> => {
+      const newSystemCompany = this.systemCompanyEntityRepository.create(systemCompanyRegisterAuthDto);
+      return await this.systemCompanyEntityRepository.save(newSystemCompany);
   }
 }

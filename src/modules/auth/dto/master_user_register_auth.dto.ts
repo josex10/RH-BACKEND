@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEmail, IsNotEmpty, IsOptional } from "class-validator";
 
-export class RegisterMasterUserAuthDto {
+export class MasterUserRegisterAuthDto {
     @ApiProperty()
     clm_username?: string;
     

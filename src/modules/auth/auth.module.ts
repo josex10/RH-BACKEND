@@ -7,11 +7,14 @@ import { JwtModule } from '@nestjs/jwt';
 import { MasterUserModule } from '../master_user/master_user.module';
 import { JwtStrategy } from './jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { SendgridService } from 'src/commons/sendgrid.common';
+import { SystemCompanyEntity } from '../system_company/entities/system_company.entity';
+import { SystemCompanyService } from '../system_company/system_company.service';
 
 @Module({
   imports: [
     MasterUserModule,
-    TypeOrmModule.forFeature([MasterUserEntity]),
+    TypeOrmModule.forFeature([MasterUserEntity, SystemCompanyEntity]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
@@ -24,6 +27,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     })
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy]
+  providers: [AuthService, JwtStrategy, SendgridService, SystemCompanyService]
 })
 export class AuthModule {}
