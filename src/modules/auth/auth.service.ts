@@ -8,18 +8,24 @@ import { JwtService } from '@nestjs/jwt';
 import { MasterUserService } from '../master_user/master_user.service';
 import { IMasterUser } from '../master_user/interfaces/master_user.interface';
 import { SystemCompanyEntity } from '../system_company/entities/system_company.entity';
-import { SystemCompanyService } from '../system_company/system_company.service';
 import { SystemCompanyRegisterAuthDto } from './dto/system_company_register_auth.dto';
+import { SystemUserRegisterDto } from './dto/system_user_register_auth.dto';
+import { EUserType } from './enums/auth.enums';
+import { SystemUserService } from '../system_user/system_user.service';
+import { SystemUserEntity } from '../system_user/entities/system_user.entity';
+import { ISystemUserComplete } from '../system_user/interfaces/system_user.interface';
+import { async } from 'rxjs';
 
 @Injectable()
 export class AuthService {
 
   constructor(
-    @InjectRepository(MasterUserEntity) private MasterUserEntityRepository: Repository<MasterUserEntity>,
+    @InjectRepository(MasterUserEntity) private masterUserEntityRepository: Repository<MasterUserEntity>,
     @InjectRepository(SystemCompanyEntity) private systemCompanyEntityRepository: Repository<SystemCompanyEntity>,
+    @InjectRepository(SystemUserEntity) private systemUserRepository: Repository<SystemUserEntity>,
     private jwtService: JwtService, 
-    private MasterUserService: MasterUserService,
-    private systemCompanyService: SystemCompanyService
+    private masterUserService: MasterUserService,
+    private systemUserService: SystemUserService
     ){}
 
   /**
@@ -35,12 +41,38 @@ export class AuthService {
 
     registerMasterUserAuthDto = { ...registerMasterUserAuthDto, clm_password: plainToHash };
 
-    const newUsername = await this.fnGenerateUsernameForUserMaster(registerMasterUserAuthDto);
+    const domain = this.fnGenerateDomains(EUserType.MASTER);
+
+    const newUsername = await this.fnGenerateUserNames(registerMasterUserAuthDto, domain, EUserType.MASTER);
 
     registerMasterUserAuthDto = { ...registerMasterUserAuthDto, clm_username: newUsername };
 
-    const newUser = this.MasterUserEntityRepository.create(registerMasterUserAuthDto);
-    return this.MasterUserEntityRepository.save(newUser);
+    const newUser = this.masterUserEntityRepository.create(registerMasterUserAuthDto);
+    return this.masterUserEntityRepository.save(newUser);
+  }
+
+
+  /**
+   * 
+   * @param registerSystemUserDto 
+   * @description Function to register a user into the DB
+   * @returns ISystemUserComplete
+   */
+  registerSystemUser = async (registerSystemUserDto: SystemUserRegisterDto): Promise<ISystemUserComplete> => {
+
+    const { clm_password } = registerSystemUserDto;
+    const plainToHash = await hash(clm_password, 10);
+
+    registerSystemUserDto = { ...registerSystemUserDto, clm_password: plainToHash };
+
+    const domain = this.fnGenerateDomains(EUserType.SYSTEM, registerSystemUserDto.clm_id_system_company);
+
+    const newUsername = await this.fnGenerateUserNames(registerSystemUserDto, domain, EUserType.SYSTEM);
+
+    registerSystemUserDto = { ...registerSystemUserDto, clm_username: newUsername };
+
+    const newUser = this.systemUserRepository.create(registerSystemUserDto);
+    return this.systemUserRepository.save(newUser);
   }
 
   /**
@@ -67,15 +99,49 @@ export class AuthService {
 
   /**
    * 
+   * @param systemUser 
+   * @description Function to create the token for system user
+   * @returns string
+   */
+  fnCreateTokerForSystemUser = (systemUser: ISystemUserComplete): string => {
+    const payload = {
+      clm_id: systemUser.clm_id, 
+      clm_username: systemUser.clm_username,
+      clm_email: systemUser.clm_email,
+    };
+    return  this.jwtService.sign(payload);
+  }
+
+  /**
+   * 
+   * @param userType 
+   * @param companyId 
+   * @description Function to generate users domains based on EUserType
+   * @returns string
+   */
+  fnGenerateDomains = (userType: EUserType, companyId: number = null): string =>{
+    let returnDomain: string = "";
+    if(userType === EUserType.MASTER){
+      returnDomain = '@admin.com';
+    } else if(userType === EUserType.SYSTEM){
+      returnDomain = `@${companyId}.restaurant-helper.com`;
+    }
+    return returnDomain;
+  }
+
+
+
+  /**
+   * 
    * @param registerMasterUserAuthDto 
    * @description Function to generate dynamic usernames
    * @returns string
    */
-  fnGenerateUsernameForUserMaster = async( registerMasterUserAuthDto: MasterUserRegisterAuthDto): Promise<string> =>{
+  fnGenerateUserNames = async( newRegister: MasterUserRegisterAuthDto | SystemUserRegisterDto, domain: string,  userType: EUserType): Promise<string> =>{
 
-    const splitname = registerMasterUserAuthDto.clm_name.split('');
-    const splitLastname = registerMasterUserAuthDto.clm_lastname_1.split(' ');
-    const domain = '@admin.com';
+    const splitname = newRegister.clm_name.split('');
+    const splitLastname = newRegister.clm_lastname_1.split(' ');
+
     let newUsername: string = `${splitname[0]}${splitLastname[0]}`;
     let newUserNameAvailable: boolean = false;
     let start: boolean = true;
@@ -89,8 +155,13 @@ export class AuthService {
         newUsername = `${newUsername}${randomNuber}`;
       }
       tmpUsername = `${newUsername}${domain}`.toLowerCase();
-      const userFound = await this.MasterUserService.findByUsername(tmpUsername);
-      let test = userFound;
+      let userFound: any;
+      if(userType === EUserType.MASTER){
+        userFound = await this.masterUserService.findByUsername(tmpUsername);
+      } else {
+        userFound = await this.systemUserService.findByUsername(tmpUsername);
+      }
+
       if(!userFound.length) {
         newUserNameAvailable = true;
       }

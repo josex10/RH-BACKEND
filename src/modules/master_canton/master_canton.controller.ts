@@ -1,6 +1,6 @@
 import { Controller, Get , Param, Response} from "@nestjs/common";
 import { Response as Res } from 'express';
-import { HttpResponseCommon } from "src/commons/http_response.common";
+import { HttpResponseCommon } from "src/commons/helpers/http_response.common";
 import { MasterCantonIdStateDto } from "./dto/master_canton_id_state.dto";
 import { MasterCantonService } from "./master_canton.service";
 

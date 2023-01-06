@@ -1,4 +1,4 @@
-import { IHttpResponseCommon } from "./interfaces/http_response.interface";
+import { IHttpResponseCommon } from "../interfaces/http_response.interface";
 import { Response as Res } from 'express';
 import { Response, HttpStatus } from '@nestjs/common';
 

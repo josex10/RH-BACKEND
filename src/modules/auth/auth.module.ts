@@ -10,11 +10,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SendgridService } from 'src/commons/sendgrid.common';
 import { SystemCompanyEntity } from '../system_company/entities/system_company.entity';
 import { SystemCompanyService } from '../system_company/system_company.service';
+import { SystemUserEntity } from '../system_user/entities/system_user.entity';
+import { SystemUserService } from '../system_user/system_user.service';
 
 @Module({
   imports: [
     MasterUserModule,
-    TypeOrmModule.forFeature([MasterUserEntity, SystemCompanyEntity]),
+    TypeOrmModule.forFeature([MasterUserEntity, SystemCompanyEntity, SystemUserEntity]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
@@ -27,6 +29,6 @@ import { SystemCompanyService } from '../system_company/system_company.service';
     })
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, SendgridService, SystemCompanyService]
+  providers: [AuthService, JwtStrategy, SendgridService, SystemCompanyService, SystemUserService]
 })
 export class AuthModule {}

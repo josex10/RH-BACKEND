@@ -1,6 +1,6 @@
 import { Controller, Get , Param, Response} from "@nestjs/common";
 import { Response as Res } from 'express';
-import { HttpResponseCommon } from "src/commons/http_response.common";
+import { HttpResponseCommon } from "src/commons/helpers/http_response.common";
 import { MasterDistrictIdCantonDto } from "./dto/master_district_id_canton.dto";
 import { MasterDistrictService } from "./master_district.service";
 

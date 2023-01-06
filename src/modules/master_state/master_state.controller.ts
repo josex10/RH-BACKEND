@@ -1,7 +1,7 @@
 import { Controller, Get , Param, Response} from "@nestjs/common";
 import { MasterStateService } from "./master_state.service";
 import { Response as Res } from 'express';
-import { HttpResponseCommon } from "src/commons/http_response.common";
+import { HttpResponseCommon } from "src/commons/helpers/http_response.common";
 import { MasterStateIdCountryDto } from "./dto/master_state_id_country.dto";
 
 @Controller('master_state')

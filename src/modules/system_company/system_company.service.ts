@@ -45,6 +45,23 @@ export class SystemCompanyService {
 
   /**
    * 
+   * @param clm_id
+   * @description Get single System Company from the DB by company id
+   * @returns ISystemCompany[]
+   */
+  fnFindByCompanyId = async(clm_id: number):Promise<ISystemCompany[]> =>{
+
+    const groupOfSystemCompany: ISystemCompany[] = await this.systemCompanyEntityRepository.find({
+      where: {
+        clm_id
+      }
+    });
+
+    return groupOfSystemCompany;
+  }
+
+  /**
+   * 
    * @param clm_identification_number 
    * @description Get single System Company from the DB by identification number and identification type
    * @returns ISystemCompany[]

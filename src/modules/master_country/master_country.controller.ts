@@ -1,7 +1,7 @@
 import { Controller, Get , Response} from "@nestjs/common";
 import { MasterCountryService } from "./master_country.service";
 import { Response as Res } from 'express';
-import { HttpResponseCommon } from "src/commons/http_response.common";
+import { HttpResponseCommon } from "src/commons/helpers/http_response.common";
 
 @Controller('master_country')
 export class MasterCountryController{

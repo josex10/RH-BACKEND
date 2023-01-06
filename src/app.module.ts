@@ -21,6 +21,7 @@ import { MasterStateModule } from './modules/master_state/master_state.module';
 import { MasterCantonModule } from './modules/master_canton/master_canton.module';
 import { MasterDistrictModule } from './modules/master_district/master_district.module';
 import { MasterIdentificationTypeModule } from './modules/master_identification_type/master_identification_type.module';
+import { SystemUserModule } from './modules/system_user/system_user.module';
 
 
 
@@ -40,7 +41,8 @@ import { MasterIdentificationTypeModule } from './modules/master_identification_
     MasterStateModule,
     MasterCantonModule, 
     MasterDistrictModule,
-    MasterIdentificationTypeModule
+    MasterIdentificationTypeModule,
+    SystemUserModule
   ],
   controllers: [AppController],
   providers: [AppService],
