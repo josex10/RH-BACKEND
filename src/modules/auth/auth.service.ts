@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { MasterUserEntity } from '../master_user/entities/master_user.entity';
 import { MasterUserRegisterAuthDto } from './dto/master_user_register_auth.dto';
 import { hash, compare } from 'bcrypt';
@@ -10,11 +10,14 @@ import { IMasterUser } from '../master_user/interfaces/master_user.interface';
 import { SystemCompanyEntity } from '../system_company/entities/system_company.entity';
 import { SystemCompanyRegisterAuthDto } from './dto/system_company_register_auth.dto';
 import { SystemUserRegisterDto } from './dto/system_user_register_auth.dto';
-import { EUserType } from './enums/auth.enums';
+import { EUserType } from '../../commons/enums/auth.enums';
 import { SystemUserService } from '../system_user/system_user.service';
 import { SystemUserEntity } from '../system_user/entities/system_user.entity';
-import { ISystemUserComplete } from '../system_user/interfaces/system_user.interface';
-import { async } from 'rxjs';
+import { ISystemUserComplete, ISystemUserWithoutPassword } from '../system_user/interfaces/system_user.interface';
+import { ConfigService } from '@nestjs/config';
+import { TAuthLoginResponse, TAuthTokens } from '../../commons/types';
+import { AnyUserLoginAuthDto } from './dto/any_user_login_auth.dto';
+import * as argon from 'argon2';
 
 @Injectable()
 export class AuthService {
@@ -25,8 +28,28 @@ export class AuthService {
     @InjectRepository(SystemUserEntity) private systemUserRepository: Repository<SystemUserEntity>,
     private jwtService: JwtService, 
     private masterUserService: MasterUserService,
-    private systemUserService: SystemUserService
+    private systemUserService: SystemUserService,
+    private readonly config: ConfigService
     ){}
+
+
+
+  /**
+   * NEW VERSION
+   */
+
+  helperCompareHash = async (hashed: string, normal: string): Promise<boolean> => {
+    return await argon.verify(hashed, normal);
+  }
+
+
+
+
+
+
+   /**
+   * END VERSION
+   */
 
   /**
    * 
@@ -103,13 +126,31 @@ export class AuthService {
    * @description Function to create the token for system user
    * @returns string
    */
-  fnCreateTokerForSystemUser = (systemUser: ISystemUserComplete): string => {
+  fnCreateTokerForSystemUser = async (systemUser: ISystemUserComplete): Promise<TAuthTokens> => {
+    
+    return await this.fnGetToken(systemUser.clm_id, systemUser.clm_email);
+    /*
     const payload = {
       clm_id: systemUser.clm_id, 
       clm_username: systemUser.clm_username,
-      clm_email: systemUser.clm_email,
+      clm_email: systemUser.clm_email, 
+      expireAt: this.fnSumMinutesToTheActualDate(30)
     };
     return  this.jwtService.sign(payload);
+    */
+  }
+
+  /**
+   * 
+   * @param minutes 
+   * @description Function to add for the actual date the amount of minutes on the parameters
+   * @returns Date()
+   */
+  fnSumMinutesToTheActualDate = (minutes: number): Date =>{
+    const d1 = new Date();
+    let d2 = new Date( d1);
+    d2.setMinutes( d1.getMinutes() + minutes);
+    return d2;
   }
 
   /**
@@ -185,4 +226,92 @@ export class AuthService {
       const newSystemCompany = this.systemCompanyEntityRepository.create(systemCompanyRegisterAuthDto);
       return await this.systemCompanyEntityRepository.save(newSystemCompany);
   }
+
+
+  fnGetToken = async (userId, userEmail): Promise<TAuthTokens> => {
+    const [at, rt] = await Promise.all([
+      this.jwtService.signAsync({
+        sub: userId, 
+        email: userEmail
+      }, 
+      {
+        secret: this.config.get<string>('JWT_SECRET_KEY'),
+        expiresIn: 60 * 60 * 12
+      }), 
+      this.jwtService.signAsync({
+        sub: userId, 
+        email: userEmail
+      }, 
+      {
+        secret: this.config.get<string>('JWT_SECRET_KEY'),
+        expiresIn: 60 * 60 * 24 * 7
+      })
+    ]);
+
+    return {
+      access_token: at, 
+      refresh_token: rt
+    }
+  }
+
+  fnUpdateRefrestTokenHash = async (clm_id: number, rt: string ) => {
+    const plainToHash = await argon.hash(rt);
+    await this.systemUserRepository.update({
+      clm_id: clm_id
+    },{
+      clm_rf_hash: plainToHash
+    });
+  }
+
+  fnLogoutSystemUser = async (clm_id: number) =>{
+    await this.systemUserRepository.update({
+        clm_id: clm_id
+    }, 
+    {
+      clm_rf_hash: null
+    });
+    return true
+  }
+
+  localRefresh = async (clm_id: number, rt: string) =>{
+    const systemUser = await this.systemUserRepository.findOne({ where: [{clm_id}]});
+
+    if(!systemUser ||  !systemUser.clm_rf_hash) throw new ForbiddenException('Access Denied');
+
+    const rtMatches = await argon.verify(systemUser.clm_rf_hash, rt);
+
+    if(!rtMatches) throw new ForbiddenException('Access Denied');
+
+    const tokens = await this.fnGetToken(systemUser.clm_id, systemUser.clm_email);
+    this.fnUpdateRefrestTokenHash(systemUser.clm_id, tokens.refresh_token);
+
+    return tokens;
+  }
+
+
+/*
+  loginSystemUser = async(systemUser: AnyUserLoginAuthDto): Promise<TAuthLoginResponse> =>{
+      const returnSystemUser = await this.systemUserRepository.findOne({
+        where: [{
+          clm_username: systemUser.clm_username,
+          clm_is_active: true
+        }]
+
+      });
+
+      if(!returnSystemUser) throw new BadRequestException('Invalid user/password or the account is disabled');
+      
+      const rtMatches = await argon.verify(returnSystemUser.clm_password, systemUser.clm_password);
+      const tokens = await this.fnGetToken(returnSystemUser.clm_id, returnSystemUser.clm_email);
+      this.fnUpdateRefrestTokenHash(returnSystemUser.clm_id, tokens.refresh_token);
+
+      return {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        systemUser: returnSystemUser
+      }
+  }
+  */
+
+  // fnAuthGetSystemUser
 }

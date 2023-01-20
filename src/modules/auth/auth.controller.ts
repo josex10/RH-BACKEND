@@ -1,16 +1,17 @@
-import { Controller, Post, Body, Response } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { MasterUserRegisterAuthDto } from './dto/master_user_register_auth.dto';
-import { AnyUserLoginAuthDto } from './dto/any_user_login_auth.dto';
-import { Response as Res } from 'express';
+import { Controller, Post, Body, Response, UseGuards, HttpCode, HttpStatus, InternalServerErrorException, BadRequestException, HttpException, Get } from '@nestjs/common';
+//TODO: NEED TO REMOVE SOON
 import { HttpResponseCommon } from 'src/commons/helpers/http_response.common';
-import { LanguageHandlerCommon } from 'src/commons/helpers/language-handler.common';
+import { Response as Res } from 'express';
+//TODO: NEED TO REMOVE SOON
+import { AuthService } from './auth.service';
 import { MasterUserService } from '../master_user/master_user.service';
 import { SystemCompanyService } from '../system_company/system_company.service';
-import { SystemCompanyRegisterAuthDto } from './dto/system_company_register_auth.dto';
 import { SystemUserService } from '../system_user/system_user.service';
-import { SystemUserRegisterDto } from './dto/system_user_register_auth.dto';
-import { Headers } from '@nestjs/common';
+import { SystemCompanyRegisterAuthDto, SystemUserRegisterDto, AnyUserLoginAuthDto, MasterUserRegisterAuthDto } from './dto';
+import { AtGuard, RtGuard } from 'src/commons/guards';
+import { GetCurrentUser, GetCurrentUserId } from '../../commons/decorators';
+import { TAuthLoginResponse, TSystemUserPublic } from 'src/commons/types';
+import { EGeneralActive, ESystemMsg } from '../../commons/enums';
 
 @Controller('auth')
 export class AuthController {
@@ -110,7 +111,7 @@ export class AuthController {
     try {
 
       const companyById = await this.systemCompanyService.fnFindByCompanyId(registerSystemUserAuthDto.clm_id_system_company);
-      if(!companyById.length){
+      if(!companyById){
         return HttpResponseCommon.response404(res, null, 'Company not Found.');   
       }
 
@@ -130,43 +131,93 @@ export class AuthController {
     
   }
 
+  //REVIEWED
   @Post('login/system-user')
-  async loginSystemUser(@Response() res: Res,@Headers() headers, @Body() incomingSystemUser: AnyUserLoginAuthDto) {
+  @HttpCode(HttpStatus.OK)
+  async loginSystemUser(@Body() systemUserLogin: AnyUserLoginAuthDto): Promise<TAuthLoginResponse> {
     try {
 
-      const languageMessageHandler = new LanguageHandlerCommon();
+      const returnSystemUser = await this.systemUserService.fnFindSystemUserByUsernameAndActive(
+          systemUserLogin.clm_username, 
+          EGeneralActive.ACTIVE
+        );
+      if(!returnSystemUser) throw new BadRequestException(ESystemMsg.INVALIDUSERPWD);
+
+      const returnsystemCompany = await this.systemCompanyService.fnFindCompanyByIdAndActive(
+        returnSystemUser.clm_id_system_company, 
+        EGeneralActive.ACTIVE
+      );
+      if(!returnsystemCompany) throw new BadRequestException(ESystemMsg.INVALIDCOMPANYORDISABLED);
       
+      const rtMatches = await this.authService.helperCompareHash(returnSystemUser.clm_password, systemUserLogin.clm_password);
+      if(!rtMatches) throw new BadRequestException(ESystemMsg.INVALIDUSERPWD);
 
-      console.log(headers['language']);
-      const storedSystemUser = await this.systemUserService.findByUsernameForLogin(incomingSystemUser.clm_username);
-      if(!storedSystemUser){
-        return HttpResponseCommon.response409(res, null, languageMessageHandler.fnlanguageHandlerMessage(headers, 'WRONG_USERNAME_PASSWORD'));  
+      const tokens = await this.authService.fnGetToken(returnSystemUser.clm_id, returnSystemUser.clm_email);
+      await this.authService.fnUpdateRefrestTokenHash(returnSystemUser.clm_id, tokens.refresh_token);
+
+      return {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        systemUser: this.systemUserService.helperConverSystemUserToPublicSystemUser(returnSystemUser),
+        systemCompany: returnsystemCompany,
       }
-
-      if(!storedSystemUser.clm_is_active){
-        return HttpResponseCommon.response401(res, null, 'User account is disable.');   
-      }
-
-      const comparePwd = await this.authService.fnComparePassword(incomingSystemUser.clm_password, storedSystemUser.clm_password);
-      if(!comparePwd){
-        return HttpResponseCommon.response409(res, null, 'The user username/password is wrong.'); 
-      }
-
-      const token = this.authService.fnCreateTokerForSystemUser(storedSystemUser);
-      const {clm_password, ...tmpSystemUser} = storedSystemUser;
-
-      const response = {
-        systemUser: tmpSystemUser, 
-        token
-      }
-      return HttpResponseCommon.response200(res, response, 'User Login Successfully'); 
-
     } catch (error) {
-      return HttpResponseCommon.response500(res, error);
+      if(error instanceof HttpException){
+        throw error;
+      }
+      throw new InternalServerErrorException(ESystemMsg.SERVERERROR)
     }
     
   }
 
-  
+  //REVIEWED
+  @UseGuards(AtGuard)
+  @Post('/logout/system-user')
+  @HttpCode(HttpStatus.OK)
+  localLogout(@GetCurrentUserId()clm_id: number){
+    return this.authService.fnLogoutSystemUser(clm_id);
+  }
+
+  //REVIEWED
+  @UseGuards(AtGuard)
+  @Get('/reload/system-user')
+  @HttpCode(HttpStatus.OK)
+  async reloadSystemUser(@GetCurrentUserId()clm_id: number):Promise<TAuthLoginResponse>{
+    try {
+      let systemUser = await this.systemUserService.fnFindSystemUserByIdAndActive(clm_id, EGeneralActive.ACTIVE);
+      if(!systemUser)throw new BadRequestException(ESystemMsg.NOTFOUNDUSER);
+
+      const returnsystemCompany = await this.systemCompanyService.fnFindCompanyByIdAndActive(
+        systemUser.clm_id_system_company, 
+        EGeneralActive.ACTIVE
+      );
+      if(!returnsystemCompany) throw new BadRequestException(ESystemMsg.INVALIDCOMPANYORDISABLED);
+
+      const tokens = await this.authService.fnGetToken(systemUser.clm_id, systemUser.clm_email);
+      await this.authService.fnUpdateRefrestTokenHash(systemUser.clm_id, tokens.refresh_token);
+
+      return {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        systemUser: this.systemUserService.helperConverSystemUserToPublicSystemUser(systemUser),
+        systemCompany: returnsystemCompany,
+      }
+    } catch (error) {
+      if(error instanceof HttpException){
+        throw error;
+      }
+      throw new InternalServerErrorException('Server Error, please contact the System Administrator')
+    }
+  }
+
+  @UseGuards(RtGuard)
+  @Post('/local/refresh')
+  @HttpCode(HttpStatus.OK)
+  localRefresh(
+    @GetCurrentUserId() userId: number,
+    @GetCurrentUser('refreshToken') refreshToken: string,
+  ){
+    return this.authService.localRefresh(userId, refreshToken);
+  }
 
 }

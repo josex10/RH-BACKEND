@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { EGeneralActive } from "src/commons/enums";
 import { Repository } from "typeorm";
 import { SystemCompanyEntity } from "./entities/system_company.entity";
 import { ISystemCompany } from "./interfaces/system_company.interface";
@@ -9,6 +10,16 @@ export class SystemCompanyService {
 
   constructor(@InjectRepository(SystemCompanyEntity) private systemCompanyEntityRepository: Repository<SystemCompanyEntity>){}
   
+
+  fnFindCompanyByIdAndActive = async(clm_id: number, activeField: EGeneralActive):Promise<ISystemCompany> =>{
+    return await this.systemCompanyEntityRepository.findOne({
+      where: {
+        clm_id,
+        clm_is_active: (activeField === EGeneralActive.ACTIVE)? true : false
+      }
+    });
+  }
+
   /**
    * 
    * @param email 
@@ -49,7 +60,7 @@ export class SystemCompanyService {
    * @description Get single System Company from the DB by company id
    * @returns ISystemCompany[]
    */
-  fnFindByCompanyId = async(clm_id: number):Promise<ISystemCompany[]> =>{
+  fnFindByCompanyId= async(clm_id: number):Promise<ISystemCompany[]> =>{
 
     const groupOfSystemCompany: ISystemCompany[] = await this.systemCompanyEntityRepository.find({
       where: {

@@ -22,6 +22,7 @@ import { MasterCantonModule } from './modules/master_canton/master_canton.module
 import { MasterDistrictModule } from './modules/master_district/master_district.module';
 import { MasterIdentificationTypeModule } from './modules/master_identification_type/master_identification_type.module';
 import { SystemUserModule } from './modules/system_user/system_user.module';
+import { SystemSupplierModule } from './modules/system_supplier/system_supplier.module';
 
 
 
@@ -42,7 +43,8 @@ import { SystemUserModule } from './modules/system_user/system_user.module';
     MasterCantonModule, 
     MasterDistrictModule,
     MasterIdentificationTypeModule,
-    SystemUserModule
+    SystemUserModule,
+    SystemSupplierModule
   ],
   controllers: [AppController],
   providers: [AppService],

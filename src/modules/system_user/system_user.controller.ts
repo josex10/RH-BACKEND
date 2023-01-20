@@ -1,5 +1,4 @@
 import { Controller, Get, Body, Patch, Param, ValidationPipe, UseGuards, Response } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { HttpResponseCommon } from 'src/commons/helpers/http_response.common';
 import { Response as Res } from 'express';
 import { SystemUserService } from './system_user.service';
@@ -7,7 +6,6 @@ import { SystemUserIdDto } from './dto/system_user_id.dto';
 import { UpdateSystemUserDto } from './dto/system_user_update.dto';
 
 @Controller('system_user')
-@UseGuards(JwtAuthGuard)
 export class SystemUserController {
   constructor(private readonly systemUserService: SystemUserService) {}
 

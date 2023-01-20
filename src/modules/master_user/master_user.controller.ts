@@ -1,5 +1,4 @@
-import { Controller, Get, Body, Patch, Param, ValidationPipe, UseGuards, Response } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Controller, Get, Body, Patch, Param, ValidationPipe, Response } from '@nestjs/common';
 import { MasterUserService } from './master_user.service';
 import { IdParamMasterUserDto } from './dto/master_user _id_param.dto';
 import { UpdateMasterUserDto } from './dto/master_user_update.dto';
@@ -7,7 +6,6 @@ import { HttpResponseCommon } from 'src/commons/helpers/http_response.common';
 import { Response as Res } from 'express';
 
 @Controller('master_user')
-@UseGuards(JwtAuthGuard)
 export class MasterUserController {
   constructor(private readonly MasterUserService: MasterUserService) {}
 

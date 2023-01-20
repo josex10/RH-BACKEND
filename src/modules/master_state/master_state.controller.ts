@@ -1,23 +1,24 @@
-import { Controller, Get , Param, Response} from "@nestjs/common";
+import { BadRequestException, Controller, Get , HttpException, InternalServerErrorException, Param, Response} from "@nestjs/common";
 import { MasterStateService } from "./master_state.service";
-import { Response as Res } from 'express';
-import { HttpResponseCommon } from "src/commons/helpers/http_response.common";
 import { MasterStateIdCountryDto } from "./dto/master_state_id_country.dto";
+import { ESystemMsg } from "src/commons/enums";
+import { IMasterState } from "./interfaces/master_state.interface";
 
 @Controller('master_state')
 export class MasterStateController{
     constructor(private readonly masterStateService: MasterStateService){}
 
     @Get('getByCountryId/:clm_id_master_country')
-    async findAllByCountryId(@Response() res: Res, @Param() params: MasterStateIdCountryDto) {
+    async findAllByCountryId(@Param() params: MasterStateIdCountryDto): Promise<IMasterState[]> {
         try {
             const groupOfMasterStates =  await this.masterStateService.fnFindByCountryId(params.clm_id_master_country);
-            if(!groupOfMasterStates.length){
-                return HttpResponseCommon.response404(res, null, 'Master State Not Found.');      
-            }
-            HttpResponseCommon.response200(res, groupOfMasterStates);
+            if(!groupOfMasterStates.length)throw new BadRequestException(ESystemMsg.MASTERSTATENOTFOUNDBYCOUNTRY);
+            return groupOfMasterStates;
         } catch (error) {
-            HttpResponseCommon.response500(res, error);
+            if(error instanceof HttpException){
+                throw error;
+              }
+            throw new InternalServerErrorException(ESystemMsg.SERVERERROR)
         }
     }
     

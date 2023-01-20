@@ -5,13 +5,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MasterUserEntity } from '../master_user/entities/master_user.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { MasterUserModule } from '../master_user/master_user.module';
-import { JwtStrategy } from './jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SendgridService } from 'src/commons/sendgrid.common';
 import { SystemCompanyEntity } from '../system_company/entities/system_company.entity';
 import { SystemCompanyService } from '../system_company/system_company.service';
 import { SystemUserEntity } from '../system_user/entities/system_user.entity';
 import { SystemUserService } from '../system_user/system_user.service';
+import { AtStrategy, RtStrategy } from '../../commons/strategies';
 
 @Module({
   imports: [
@@ -29,6 +29,13 @@ import { SystemUserService } from '../system_user/system_user.service';
     })
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, SendgridService, SystemCompanyService, SystemUserService]
+  providers: [
+    AuthService,  
+    SendgridService, 
+    SystemCompanyService, 
+    SystemUserService,
+    AtStrategy, 
+    RtStrategy
+  ]
 })
 export class AuthModule {}

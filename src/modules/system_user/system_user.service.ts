@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { TSystemUser, TSystemUserPublic } from 'src/commons/types';
 import { Repository, UpdateResult } from 'typeorm';
+import { EGeneralActive } from '../../commons/enums';
 import { UpdateSystemUserDto } from './dto/system_user_update.dto';
 import { SystemUserEntity } from './entities/system_user.entity';
 import { ISystemUserComplete, ISystemUserWithoutPassword } from './interfaces/system_user.interface';
@@ -9,6 +11,55 @@ import { ISystemUserComplete, ISystemUserWithoutPassword } from './interfaces/sy
 export class SystemUserService {
 
   constructor(@InjectRepository(SystemUserEntity) private systemUserRepository: Repository<SystemUserEntity>){}
+
+
+  /*****
+   * NEW VERSION
+   */
+
+  helperConverSystemUserToPublicSystemUser = (systemUser: TSystemUser): TSystemUserPublic =>{
+    const {clm_password, clm_rf_hash, ...tmpSystemUser} = systemUser;
+    return tmpSystemUser;
+  }
+
+  fnFindSystemUserByUsernameAndActive = async(clm_username: string, activeField: EGeneralActive): Promise<TSystemUser> =>{
+    return await this.systemUserRepository.findOne({
+      where: [{
+        clm_username: clm_username,
+        clm_is_active: (activeField === EGeneralActive.ACTIVE)? true : false
+      }]
+
+    });
+  }
+
+  fnFindSystemUserByIdAndActive = async(clm_id: number, activeField: EGeneralActive): Promise<TSystemUser> =>{
+    return await this.systemUserRepository.findOne({
+      where: [{
+        clm_id: clm_id,
+        clm_is_active: (activeField === EGeneralActive.ACTIVE)? true : false
+      }]
+
+    });
+  }
+
+
+  /*****
+   * END NEW VERSION
+   */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   /**
    * @description Get all system users from the Database
@@ -190,5 +241,7 @@ export class SystemUserService {
       return tmpSystemUser;
     });
   }
+
+
 
 }
