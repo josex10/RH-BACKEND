@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getConnection, Repository } from 'typeorm';
-import { SystemSupplierCreateDto } from './dto';
+import { Repository, UpdateResult } from 'typeorm';
+import { SystemSupplierCreateDto, SystemSupplierEditDto } from './dto';
 import { SystemSupplierEntity } from './entities/system_supplier.entity';
 import { SystemSupplierWithState, TSystemSupplier } from './types'
 
@@ -50,5 +50,9 @@ export class SystemSupplierService {
             .select(['supplier', 'state.clm_id', 'state.clm_name'])
             .where('supplier.clm_id_system_company =:clm_id_system_company', {clm_id_system_company: clm_id_system_company})
             .getMany();
+    }
+
+    fnUpdateSystemSupplier = async(systemSupplier: SystemSupplierEditDto): Promise<UpdateResult> => {
+        return this.systemSupplierRepository.update({clm_id: systemSupplier.clm_id}, systemSupplier);
     }
 }

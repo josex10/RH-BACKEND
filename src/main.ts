@@ -18,5 +18,17 @@ async function bootstrap() {
   
   app.useGlobalPipes(new ValidationPipe)
   await app.listen(3000);
+  myFuncion();
+
 }
 bootstrap();
+
+function myFuncion() {
+  
+ let nums = [1, 2, 3, 4];
+ let sum = nums.reduce(function(preVal, curVal, curIndex, oriArr){
+  return preVal + curVal;
+ })
+
+ console.log(sum)
+}

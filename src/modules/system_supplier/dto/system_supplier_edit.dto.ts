@@ -1,6 +1,10 @@
-import { IsBoolean, IsEmail, IsNotEmpty, isNumber, IsNumber, IsNumberString, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class SystemSupplierCreateDto {
+export class SystemSupplierEditDto{
+   
+    @IsNumber()
+    @IsNotEmpty()
+    clm_id: number;
 
     @IsNumber()
     @IsNotEmpty()
@@ -14,27 +18,28 @@ export class SystemSupplierCreateDto {
     @IsNotEmpty()
     clm_name: string;
 
-    @IsString()
-    @IsEmail()
     @IsOptional()
     clm_email?: string;
 
-    @IsString()
     @IsOptional()
     clm_phone?: string;
 
-    @IsString()
     @IsOptional()
     clm_address?: string;
 
-    @IsString()
     @IsOptional()
     clm_tax_number?: string;
 
-    @IsString()
     @IsOptional()
     clm_description?: string;
 
     @IsOptional()
     clm_id_system_created_by: number;
+
+    @IsNotEmpty()
+    @IsBoolean()
+    clm_is_active: boolean;
+
+    @IsOptional()
+    clm_id_system_updated_by: number;
 }
